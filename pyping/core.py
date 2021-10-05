@@ -183,7 +183,7 @@ class Ping(object):
         else:
             print(msg)
 
-        raise Exception, "unknown_host"
+        raise Exception("unknown_host")
         # sys.exit(-1)
 
     def print_success(self, delay, ip, packet_size, ip_header, icmp_header):
@@ -339,15 +339,15 @@ class Ping(object):
                     (self.bind, 0)
                 )  # Port number is irrelevant for ICMP
 
-        except socket.error, (errno, msg):
-            if errno == 1:
+        except socket.error as error:
+            if error.errno == 1:
                 # Operation not permitted - Add more information to traceback
                 etype, evalue, etb = sys.exc_info()
                 evalue = etype(
                     "%s - Note that ICMP messages can only be send from processes running as root."
                     % evalue
                 )
-                raise etype, evalue, etb
+                raise Exception(etype, evalue, etb)
             raise  # raise the original error
 
         send_time = self.send_one_ping(current_socket)
