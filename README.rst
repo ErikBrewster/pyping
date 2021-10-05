@@ -47,6 +47,10 @@ Use as a Python lib::
     >>> r.destination_ip
     '92.243.5.143'
 
+Dependencies
+----
+clint - pip install clint
+
 Todo
 ----
 
