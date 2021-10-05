@@ -61,14 +61,27 @@ def calculate_checksum(source_string):
         else:
             loByte = source_string[count + 1]
             hiByte = source_string[count]
-        sum = sum + (ord(hiByte) * 256 + ord(loByte))
+        try:
+            hiByte = ord(hiByte)
+        except TypeError:
+            pass
+        try:
+            loByte = ord(loByte)
+        except TypeError:
+            pass
+
+        sum = sum + hiByte * 256 + loByte
         count += 2
 
     # Handle last byte if applicable (odd-number of bytes)
     # Endianness should be irrelevant in this case
     if countTo < len(source_string):  # Check for odd length
         loByte = source_string[len(source_string) - 1]
-        sum += ord(loByte)
+        try:
+            loByte = ord(loByte)
+        except TypeError:
+            pass
+        sum += loByte
 
     sum &= 0xFFFFFFFF  # Truncate sum to 32 bits (a variance from ping.c, which
     # uses signed ints, but overflow is unlikely in ping)
@@ -99,6 +112,11 @@ def to_ip(addr):
     if is_valid_ip4_address(addr):
         return addr
     return socket.gethostbyname(addr)
+
+
+class UnknownHost(Exception):
+    def __init__(self, url):
+        self.url = url
 
 
 class Response(object):
@@ -183,7 +201,7 @@ class Ping(object):
         else:
             print(msg)
 
-        raise Exception("unknown_host")
+        raise UnknownHost(self.destination)
         # sys.exit(-1)
 
     def print_success(self, delay, ip, packet_size, ip_header, icmp_header):
@@ -469,5 +487,9 @@ class Ping(object):
 
 
 def ping(hostname, timeout=1000, count=3, packet_size=55, *args, **kwargs):
-    p = Ping(hostname, timeout, packet_size, *args, **kwargs)
-    return p.run(count)
+    try:
+        p = Ping(hostname, timeout, packet_size, *args, **kwargs)
+        run_return = p.run(count)
+        return run_return
+    except UnknownHost as error:
+        return f"Ping failed - Unkown host: {error.url}"
